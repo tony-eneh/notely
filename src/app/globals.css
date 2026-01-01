@@ -613,3 +613,8 @@
     font-size: 1.375em;
   }
 }
+
+/* make contents of clerk user popup clickable on mobile */
+.cl-userButtonPopoverRootBox {
+  pointer-events: auto;
+}
