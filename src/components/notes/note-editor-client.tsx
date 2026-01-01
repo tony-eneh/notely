@@ -164,62 +164,71 @@ export function NoteEditorClient({ note, isNew = false }: NoteEditorClientProps)
   };
 
   return (
-    <div className="container py-6 max-w-4xl">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
+    <div className="min-h-screen w-full bg-background">
+      {/* Minimal top bar - Notion style */}
+      <div className="fixed top-0 left-0 right-0 z-40 h-12 flex items-center justify-between px-6 border-b bg-background/80 backdrop-blur-sm">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
             <Link href="/notes">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            {hasChanges && <span>Unsaved changes</span>}
-          </div>
+          {hasChanges && (
+            <span className="text-xs text-muted-foreground">Unsaved changes</span>
+          )}
         </div>
-        <Button onClick={handleSave} disabled={isSaving}>
+        <Button 
+          onClick={handleSave} 
+          disabled={isSaving}
+          size="sm"
+          className="h-8"
+        >
           {isSaving ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
+              <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+              Saving
             </>
           ) : (
             <>
-              <Save className="mr-2 h-4 w-4" />
+              <Save className="mr-2 h-3 w-3" />
               Save
             </>
           )}
         </Button>
       </div>
 
-      {/* Title */}
-      <Input
-        value={title}
-        onChange={handleTitleChange}
-        placeholder="Untitled"
-        className="text-3xl font-bold border-none shadow-none px-0 mb-6 focus-visible:ring-0 placeholder:text-muted-foreground/50"
-      />
+      {/* Notion-style editor container */}
+      <div className="pt-12">
+        <div className="max-w-[900px] mx-auto px-24 py-16">
+          {/* Title - Notion style */}
+          <Input
+            value={title}
+            onChange={handleTitleChange}
+            placeholder="Untitled"
+            className="text-[2.5em] font-bold border-none shadow-none px-0 mb-2 focus-visible:ring-0 placeholder:text-muted-foreground/30 bg-transparent h-auto py-1"
+          />
 
-      {/* Summary (if exists) */}
-      {summary && (
-        <div className="mb-6 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 p-4 border border-indigo-200 dark:border-indigo-800">
-          <h3 className="text-sm font-semibold text-indigo-700 dark:text-indigo-300 mb-2">
-            AI Summary
-          </h3>
-          <p className="text-sm text-indigo-600 dark:text-indigo-400">{summary}</p>
+          {/* Summary (if exists) */}
+          {summary && (
+            <div className="mb-4 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 p-4 border border-indigo-200 dark:border-indigo-800">
+              <h3 className="text-sm font-semibold text-indigo-700 dark:text-indigo-300 mb-2">
+                AI Summary
+              </h3>
+              <p className="text-sm text-indigo-600 dark:text-indigo-400">{summary}</p>
+            </div>
+          )}
+
+          {/* Editor */}
+          <PlateEditor
+            initialValue={content}
+            onChange={handleContentChange}
+            onSave={handleSave}
+            onAiSummarize={handleAiSummarize}
+            onAiComplete={handleAiComplete}
+            isSummarizing={isSummarizing}
+          />
         </div>
-      )}
-
-      {/* Editor */}
-      <PlateEditor
-        initialValue={content}
-        onChange={handleContentChange}
-        onSave={handleSave}
-        onAiSummarize={handleAiSummarize}
-        onAiComplete={handleAiComplete}
-        isSummarizing={isSummarizing}
-        placeholder="Start writing your note..."
-      />
+      </div>
     </div>
   );
 }
