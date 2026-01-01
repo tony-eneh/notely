@@ -177,23 +177,9 @@ model Tag {
 ### Phase 6: Enhanced PWA Features (Next Steps)
 
 #### High Priority
-1. **Offline Editing with Background Sync**
-   - Allow users to edit notes offline
-   - Queue changes and auto-sync when connection restored
-   - Prevents data loss during poor connectivity
-   - Implementation: Service Worker Background Sync API + IndexedDB
-
-2. **Share Target API**
-   - Let users share text/links from other apps directly to Notely
-   - Creates new note with shared content
-   - Great for capturing ideas on-the-go
-   - Implementation: Add `share_target` to manifest.json + API endpoint
-
-3. **Push Notifications**
-   - Reminders for notes with due dates/tags
-   - Daily writing prompts to encourage regular use
-   - Collaboration notifications (future multi-user feature)
-   - Implementation: Web Push API + notification service
+- [x] Offline editing with background sync — implemented via Workbox runtime caching + Background Sync queues; UI badges + toasts for offline/queued/syncing states
+- [ ] Share Target API — receive shared text/links from other apps to create a new note; add `share_target` to manifest + handler route
+- [ ] Push Notifications — reminders, daily prompts, future collaboration alerts; Web Push + notification service
 
 #### Medium Priority
 4. **Periodic Background Sync**
