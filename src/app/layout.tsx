@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Playfair_Display, DM_Sans } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -33,12 +33,13 @@ export const metadata: Metadata = {
     icon: "/icon-192x192.png",
     apple: "/icon-192x192.png",
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
   themeColor: "#d4a866",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-  },
 };
 
 export default function RootLayout({
