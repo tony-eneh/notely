@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Save, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Mic } from "lucide-react";
 import Link from "next/link";
 import debounce from "lodash.debounce";
 
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Note } from "@/types";
+import { VoiceNoteRecorder, AudioPlayer } from "@/components/notes";
 
 interface NoteEditorClientProps {
   note?: Note;
@@ -29,6 +30,11 @@ export function NoteEditorClient({ note, isNew = false }: NoteEditorClientProps)
   const [noteId, setNoteId] = useState(note?.id);
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [summary, setSummary] = useState(note?.summary || "");
+  const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
+  const [audioUrl, setAudioUrl] = useState(note?.audioUrl || "");
+  const [audioSize, setAudioSize] = useState(note?.audioSize || undefined);
+  const [audioDuration, setAudioDuration] = useState(note?.audioDuration || undefined);
+  const [transcriptionStatus, setTranscriptionStatus] = useState(note?.transcriptionStatus || "none");
 
   // Auto-save debounced
   const debouncedSave = useCallback(
@@ -65,7 +71,14 @@ export function NoteEditorClient({ note, isNew = false }: NoteEditorClientProps)
         const response = await fetch("/api/notes", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: title || "Untitled", content }),
+          body: JSON.stringify({ 
+            title: title || "Untitled", 
+            content,
+            audioUrl,
+            audioSize,
+            audioDuration,
+            transcriptionStatus,
+          }),
         });
 
         if (!response.ok) throw new Error("Failed to create note");
@@ -83,7 +96,14 @@ export function NoteEditorClient({ note, isNew = false }: NoteEditorClientProps)
         const response = await fetch(`/api/notes/${noteId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title, content }),
+          body: JSON.stringify({ 
+            title, 
+            content,
+            audioUrl,
+            audioSize,
+            audioDuration,
+            transcriptionStatus,
+          }),
         });
 
         if (!response.ok) throw new Error("Failed to save note");
@@ -163,6 +183,35 @@ export function NoteEditorClient({ note, isNew = false }: NoteEditorClientProps)
     });
   };
 
+  const handleTranscriptionComplete = (data: {
+    transcription: string;
+    audioUrl: string;
+    audioSize: number;
+    audioDuration: number;
+  }) => {
+    // Update state with audio data
+    setAudioUrl(data.audioUrl);
+    setAudioSize(data.audioSize);
+    setAudioDuration(data.audioDuration);
+    setTranscriptionStatus("completed");
+    
+    // Add transcription to content
+    const transcriptionContent = [
+      ...content,
+      { type: "p", children: [{ text: data.transcription }] }
+    ];
+    setContent(transcriptionContent);
+    setHasChanges(true);
+    
+    // Close recorder
+    setShowVoiceRecorder(false);
+    
+    toast({
+      title: "Voice note added",
+      description: "Your recording has been transcribed and added to the note.",
+    });
+  };
+
   return (
     <div className="min-h-screen w-full bg-background">
       {/* Minimal top bar - Notion style */}
@@ -177,25 +226,48 @@ export function NoteEditorClient({ note, isNew = false }: NoteEditorClientProps)
             <span className="text-xs text-muted-foreground">Unsaved changes</span>
           )}
         </div>
-        <Button 
-          onClick={handleSave} 
-          disabled={isSaving}
-          size="sm"
-          className="h-8"
-        >
-          {isSaving ? (
-            <>
-              <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-              Saving
-            </>
-          ) : (
-            <>
-              <Save className="mr-2 h-3 w-3" />
-              Save
-            </>
-          )}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            onClick={() => setShowVoiceRecorder(true)}
+            variant="outline"
+            size="sm"
+            className="h-8"
+          >
+            <Mic className="mr-2 h-3 w-3" />
+            Voice Note
+          </Button>
+          <Button 
+            onClick={handleSave} 
+            disabled={isSaving}
+            size="sm"
+            className="h-8"
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                Saving
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-3 w-3" />
+                Save
+              </>
+            )}
+          </Button>
+        </div>
       </div>
+
+      {/* Voice Note Recorder Modal */}
+      {showVoiceRecorder && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-lg">
+            <VoiceNoteRecorder
+              onTranscriptionComplete={handleTranscriptionComplete}
+              onCancel={() => setShowVoiceRecorder(false)}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Notion-style editor container */}
       <div className="pt-12">
@@ -215,6 +287,17 @@ export function NoteEditorClient({ note, isNew = false }: NoteEditorClientProps)
                 AI Summary
               </h3>
               <p className="text-sm text-indigo-600 dark:text-indigo-400">{summary}</p>
+            </div>
+          )}
+
+          {/* Audio Player (if note has audio) */}
+          {audioUrl && (
+            <div className="mb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Mic className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">Voice Note</span>
+              </div>
+              <AudioPlayer audioUrl={audioUrl} duration={audioDuration} />
             </div>
           )}
 

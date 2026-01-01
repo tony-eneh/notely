@@ -4,6 +4,13 @@ export interface Note {
   content: unknown;
   plainText: string | null;
   summary: string | null;
+  
+  // Voice note fields
+  audioUrl: string | null;
+  audioSize: number | null;
+  audioDuration: number | null;
+  transcriptionStatus: string | null;
+  
   userId: string;
   folderId: string | null;
   isFavorite: boolean;

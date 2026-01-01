@@ -158,6 +158,57 @@ model Tag {
 - [x] Implement summarization feature
 - [x] Implement smart search with embeddings
 
+### Phase 4: Voice Notes (In Progress)
+- [ ] Setup Vercel Blob storage for audio files
+- [ ] Update database schema with audio fields
+- [ ] Create audio transcription API (OpenAI Whisper)
+- [ ] Build voice recorder component
+- [ ] Integrate voice notes into editor
+- [ ] Add audio playback UI
+
+### Phase 5: Polish (Future)
+- [ ] Add animations with Framer Motion
+- [ ] Implement dark/light theme
+- [ ] Add keyboard shortcuts
+- [ ] Mobile responsive design
+
+## Voice Notes Feature Specifications
+
+### Technical Implementation
+- **Audio Storage**: Vercel Blob (encrypted, secure URLs)
+- **Transcription**: OpenAI Whisper API (auto-detects language, supports 99 languages)
+- **Recording Limits**: Maximum 10 minutes per recording
+- **Supported Formats**: WebM (Chrome/Edge), MP4 (Safari), MP3 (fallback)
+- **Audio Processing**: Browser MediaRecorder API, no external dependencies
+
+### Database Schema Updates
+```prisma
+model Note {
+  // ... existing fields
+  audioUrl         String?   // Vercel Blob URL
+  audioSize        Int?      // File size in bytes
+  audioDuration    Float?    // Duration in seconds
+  transcriptionStatus String? @default("none") // none, processing, completed, failed
+}
+```
+
+### API Endpoints
+- `POST /api/ai/transcribe` - Upload audio, transcribe with Whisper
+- `POST /api/notes` - Extended to accept audioUrl field
+
+### User Experience
+- Voice recorder button in note editor toolbar
+- Real-time recording visualization (waveform)
+- Audio preview before creating note
+- Transcription progress indicator
+- Audio player attached to notes with recordings
+- Auto-save transcribed text to editor
+
+### Cost Considerations
+- Whisper API: $0.006/minute of audio
+- Vercel Blob: Free tier 500GB/month, then $0.15/GB
+- No usage limits initially (to be added if needed)
+
 ### Phase 4: Polish (Future)
 - [ ] Add animations with Framer Motion
 - [ ] Implement dark/light theme
@@ -181,6 +232,9 @@ DIRECT_URL=
 
 # OpenAI
 OPENAI_API_KEY=
+
+# Vercel Blob (for voice notes)
+BLOB_READ_WRITE_TOKEN=
 ```
 
 ## Getting Started

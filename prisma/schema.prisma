@@ -24,6 +24,13 @@ model Note {
   content    Json?    // Plate JSON content
   plainText  String?  @db.Text // Plain text for search
   summary    String?  @db.Text // AI-generated summary
+  
+  // Voice note fields
+  audioUrl            String?  // Vercel Blob URL
+  audioSize           Int?     // File size in bytes
+  audioDuration       Float?   // Duration in seconds
+  transcriptionStatus String?  @default("none") // none, processing, completed, failed
+  
   userId     String
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   folderId   String?

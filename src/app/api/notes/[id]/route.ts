@@ -53,7 +53,19 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
-    const { title, content, folderId, isFavorite, isArchived, summary, tags } = body;
+    const { 
+      title, 
+      content, 
+      folderId, 
+      isFavorite, 
+      isArchived, 
+      summary, 
+      tags,
+      audioUrl,
+      audioSize,
+      audioDuration,
+      transcriptionStatus,
+    } = body;
 
     // Check if note exists and belongs to user
     const existingNote = await db.note.findUnique({
@@ -77,6 +89,10 @@ export async function PATCH(
         isFavorite,
         isArchived,
         summary,
+        audioUrl,
+        audioSize,
+        audioDuration,
+        transcriptionStatus,
         tags: tags
           ? {
               set: [], // Remove existing tags

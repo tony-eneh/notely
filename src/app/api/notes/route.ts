@@ -77,7 +77,16 @@ export async function POST(request: Request) {
     });
 
     const body = await request.json();
-    const { title, content, folderId, tags } = body;
+    const { 
+      title, 
+      content, 
+      folderId, 
+      tags,
+      audioUrl,
+      audioSize,
+      audioDuration,
+      transcriptionStatus,
+    } = body;
 
     // Extract plain text from content for search
     const plainText = extractPlainText(content);
@@ -89,6 +98,10 @@ export async function POST(request: Request) {
         plainText,
         userId,
         folderId,
+        audioUrl,
+        audioSize,
+        audioDuration,
+        transcriptionStatus,
         tags: tags
           ? {
               connectOrCreate: tags.map((tag: string) => ({
