@@ -32,6 +32,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Folder } from "@/types";
@@ -50,7 +51,12 @@ export function AppSidebar({ folders = [] }: AppSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useUser();
+   const { isMobile, setOpenMobile } = useSidebar();
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+
+  const closeMobile = () => {
+    if (isMobile) setOpenMobile(false);
+  };
 
   const toggleFolder = (folderId: string) => {
     setExpandedFolders((prev) => {
@@ -65,6 +71,7 @@ export function AppSidebar({ folders = [] }: AppSidebarProps) {
   };
 
   const handleNewNote = () => {
+    closeMobile();
     router.push("/notes/new");
   };
 
@@ -116,7 +123,7 @@ export function AppSidebar({ folders = [] }: AppSidebarProps) {
                           isActive && "bg-sidebar-accent sidebar-item-active"
                         )}
                       >
-                        <Link href={item.href}>
+                        <Link href={item.href} onClick={closeMobile}>
                           <item.icon className={cn(
                             "h-4 w-4 transition-colors",
                             isActive ? "text-sidebar-primary" : "text-sidebar-foreground/60"
@@ -201,7 +208,7 @@ export function AppSidebar({ folders = [] }: AppSidebarProps) {
                               {folder.children.map((child) => (
                                 <SidebarMenuSubItem key={child.id}>
                                   <SidebarMenuSubButton asChild className="py-2">
-                                    <Link href={`/notes?folder=${child.id}`}>
+                                    <Link href={`/notes?folder=${child.id}`} onClick={closeMobile}>
                                       <FolderClosed
                                         className="h-3 w-3"
                                         style={{ color: child.color || 'var(--sidebar-primary)' }}
