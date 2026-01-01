@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id // Clerk user ID
+  email     String   @unique
+  name      String?
+  imageUrl  String?
+  notes     Note[]
+  folders   Folder[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Note {
+  id         String   @id @default(cuid())
+  title      String   @default("Untitled")
+  content    Json?    // Plate JSON content
+  plainText  String?  @db.Text // Plain text for search
+  summary    String?  @db.Text // AI-generated summary
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  folderId   String?
+  folder     Folder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  tags       Tag[]
+  isFavorite Boolean  @default(false)
+  isArchived Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId])
+  @@index([folderId])
+  @@index([createdAt])
+}
+
+model Folder {
+  id        String   @id @default(cuid())
+  name      String
+  icon      String?
+  color     String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notes     Note[]
+  parentId  String?
+  parent    Folder?  @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children  Folder[] @relation("FolderHierarchy")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([parentId])
+}
+
+model Tag {
+  id    String @id @default(cuid())
+  name  String @unique
+  color String @default("#6366f1")
+  notes Note[]
+}
