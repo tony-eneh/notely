@@ -20,6 +20,25 @@ const dmSans = DM_Sans({
 export const metadata: Metadata = {
   title: "Notely — Where Ideas Find Their Voice",
   description: "A refined, AI-powered writing companion for modern thinkers",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Notely",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  icons: {
+    icon: "/icon-192x192.png",
+    apple: "/icon-192x192.png",
+  },
+  themeColor: "#d4a866",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+  },
 };
 
 export default function RootLayout({
