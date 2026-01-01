@@ -178,7 +178,7 @@ model Tag {
 
 #### High Priority
 - [x] Offline editing with background sync — implemented via Workbox runtime caching + Background Sync queues; UI badges + toasts for offline/queued/syncing states
-- [ ] Share Target API — receive shared text/links from other apps to create a new note; add `share_target` to manifest + handler route
+- [x] Share Target API — manifest share_target added; server route creates a note from shared title/text/url and redirects to it
 - [ ] Push Notifications — reminders, daily prompts, future collaboration alerts; Web Push + notification service
 
 #### Medium Priority
