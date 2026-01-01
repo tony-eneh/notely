@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Save, Loader2, Mic } from "lucide-react";
 import Link from "next/link";
@@ -35,12 +35,52 @@ export function NoteEditorClient({ note, isNew = false }: NoteEditorClientProps)
   const [audioSize, setAudioSize] = useState(note?.audioSize || undefined);
   const [audioDuration, setAudioDuration] = useState(note?.audioDuration || undefined);
   const [transcriptionStatus, setTranscriptionStatus] = useState(note?.transcriptionStatus || "none");
+  const [isOnline, setIsOnline] = useState(typeof navigator === "undefined" ? true : navigator.onLine);
+  const [queuedSync, setQueuedSync] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("notely-sync-queued") === "1";
+  });
+  const offlineQueuedRef = useRef(false);
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+
+      if (offlineQueuedRef.current || queuedSync) {
+        setQueuedSync(true);
+        toast({
+          title: "Back online",
+          description: "Syncing queued changes now.",
+        });
+
+        // Clear queued badge after a short delay; the SW handles actual replay.
+        setTimeout(() => {
+          setQueuedSync(false);
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("notely-sync-queued");
+          }
+        }, 4000);
+      }
+
+      offlineQueuedRef.current = false;
+    };
+
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [toast, queuedSync]);
 
   // Auto-save debounced
   const debouncedSave = useCallback(
     debounce(async (id: string | undefined, data: { title: string; content: unknown[] }) => {
       if (!id) return;
-      
+
       try {
         await fetch(`/api/notes/${id}`, {
           method: "PATCH",
@@ -49,10 +89,23 @@ export function NoteEditorClient({ note, isNew = false }: NoteEditorClientProps)
         });
         setHasChanges(false);
       } catch (error) {
-        console.error("Auto-save failed:", error);
+        if (!navigator.onLine && !offlineQueuedRef.current) {
+          offlineQueuedRef.current = true;
+          setQueuedSync(true);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("notely-sync-queued", "1");
+          }
+          setHasChanges(false);
+          toast({
+            title: "Offline",
+            description: "Changes queued and will sync when you're back online.",
+          });
+        } else {
+          console.error("Auto-save failed:", error);
+        }
       }
     }, 1000),
-    []
+    [toast]
   );
 
   // Track changes and auto-save
@@ -67,6 +120,14 @@ export function NoteEditorClient({ note, isNew = false }: NoteEditorClientProps)
 
     try {
       if (isNew && !noteId) {
+        if (!isOnline) {
+          toast({
+            title: "Offline",
+            description: "Go online to create a new note.",
+            variant: "destructive",
+          });
+          return;
+        }
         // Create new note
         const response = await fetch("/api/notes", {
           method: "POST",
@@ -116,11 +177,24 @@ export function NoteEditorClient({ note, isNew = false }: NoteEditorClientProps)
 
       setHasChanges(false);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to save note. Please try again.",
-        variant: "destructive",
-      });
+      if (!navigator.onLine) {
+        offlineQueuedRef.current = true;
+        setQueuedSync(true);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("notely-sync-queued", "1");
+        }
+        setHasChanges(false);
+        toast({
+          title: "Offline",
+          description: "Changes queued and will sync when you're back online.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to save note. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsSaving(false);
     }
@@ -222,6 +296,16 @@ export function NoteEditorClient({ note, isNew = false }: NoteEditorClientProps)
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
+          {!isOnline && (
+            <span className="text-xs text-amber-700 bg-amber-100 border border-amber-200 rounded-full px-2 py-0.5">
+              Offline — changes will sync later
+            </span>
+          )}
+          {queuedSync && isOnline && (
+            <span className="text-xs text-emerald-700 bg-emerald-100 border border-emerald-200 rounded-full px-2 py-0.5">
+              Syncing queued changes…
+            </span>
+          )}
           {hasChanges && (
             <span className="text-xs text-muted-foreground">Unsaved changes</span>
           )}

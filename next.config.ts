@@ -15,5 +15,62 @@ export default withPWA({
   disable: process.env.NODE_ENV === "development",
   workboxOptions: {
     disableDevLogs: true,
+    runtimeCaching: [
+      {
+        urlPattern: /^https?:\/\/[^/]+\/api\/notes.*$/,
+        handler: "NetworkFirst",
+        method: "GET",
+        options: {
+          cacheName: "notes-api-cache",
+          networkTimeoutSeconds: 3,
+          expiration: {
+            maxEntries: 50,
+            maxAgeSeconds: 30 * 60,
+          },
+          cacheableResponse: {
+            statuses: [0, 200],
+          },
+        },
+      },
+      {
+        urlPattern: /^https?:\/\/[^/]+\/api\/notes.*$/,
+        handler: "NetworkOnly",
+        method: "POST",
+        options: {
+          backgroundSync: {
+            name: "notes-post-queue",
+            options: {
+              maxRetentionTime: 24 * 60,
+            },
+          },
+        },
+      },
+      {
+        urlPattern: /^https?:\/\/[^/]+\/api\/notes.*$/,
+        handler: "NetworkOnly",
+        method: "PATCH",
+        options: {
+          backgroundSync: {
+            name: "notes-patch-queue",
+            options: {
+              maxRetentionTime: 24 * 60,
+            },
+          },
+        },
+      },
+      {
+        urlPattern: /^https?:\/\/[^/]+\/api\/notes.*$/,
+        handler: "NetworkOnly",
+        method: "DELETE",
+        options: {
+          backgroundSync: {
+            name: "notes-delete-queue",
+            options: {
+              maxRetentionTime: 24 * 60,
+            },
+          },
+        },
+      },
+    ],
   },
 })(nextConfig);

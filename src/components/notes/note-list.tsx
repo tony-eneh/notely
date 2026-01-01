@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Feather, Plus } from "lucide-react";
 import Link from "next/link";
@@ -24,6 +25,41 @@ export function NoteList({
   onArchive,
   onDelete,
 }: NoteListProps) {
+  const [isOnline, setIsOnline] = useState(
+    typeof navigator === "undefined" ? true : navigator.onLine
+  );
+  const [queuedSync, setQueuedSync] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("notely-sync-queued") === "1";
+  });
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      // Clear queued flag once online; service worker handles replay.
+      setQueuedSync(false);
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("notely-sync-queued");
+      }
+    };
+    const handleOffline = () => setIsOnline(false);
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === "notely-sync-queued") {
+        setQueuedSync(event.newValue === "1");
+      }
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, []);
+
   if (isLoading) {
     return (
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -76,29 +112,46 @@ export function NoteList({
   }
 
   return (
-    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-      <AnimatePresence mode="popLayout">
-        {notes.map((note, index) => (
-          <motion.div
-            key={note.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ 
-              duration: 0.3, 
-              delay: index * 0.05,
-              ease: "easeOut"
-            }}
-          >
-            <NoteCard
-              note={note}
-              onFavorite={onFavorite}
-              onArchive={onArchive}
-              onDelete={onDelete}
-            />
-          </motion.div>
-        ))}
-      </AnimatePresence>
+    <div className="space-y-3">
+      {(queuedSync || !isOnline) && (
+        <div className="flex items-center gap-2 flex-wrap">
+          {!isOnline && (
+            <span className="text-xs text-amber-700 bg-amber-100 border border-amber-200 rounded-full px-2 py-0.5">
+              Offline — changes will sync later
+            </span>
+          )}
+          {queuedSync && isOnline && (
+            <span className="text-xs text-emerald-700 bg-emerald-100 border border-emerald-200 rounded-full px-2 py-0.5">
+              Syncing queued changes…
+            </span>
+          )}
+        </div>
+      )}
+
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <AnimatePresence mode="popLayout">
+          {notes.map((note, index) => (
+            <motion.div
+              key={note.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ 
+                duration: 0.3, 
+                delay: index * 0.05,
+                ease: "easeOut"
+              }}
+            >
+              <NoteCard
+                note={note}
+                onFavorite={onFavorite}
+                onArchive={onArchive}
+                onDelete={onDelete}
+              />
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
