@@ -7,14 +7,12 @@ import { UserButton, useUser } from "@clerk/nextjs";
 import {
   FileText,
   FolderClosed,
-  Home,
   Plus,
-  Search,
   Settings,
   Star,
   Archive,
   ChevronRight,
-  Sparkles,
+  Feather,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -34,11 +32,8 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-  SidebarProvider,
-  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { Folder } from "@/types";
 
 const mainNavItems = [
@@ -74,23 +69,29 @@ export function AppSidebar({ folders = [] }: AppSidebarProps) {
   };
 
   return (
-    <Sidebar className="border-r border-border/40">
-      <SidebarHeader className="p-4">
+    <Sidebar className="border-r-0 bg-sidebar">
+      {/* Brand Header */}
+      <SidebarHeader className="px-5 pt-6 pb-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600">
-            <Sparkles className="h-5 w-5 text-white" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sidebar-primary/10 ring-1 ring-sidebar-primary/20">
+            <Feather className="h-5 w-5 text-sidebar-primary" />
           </div>
           <div className="flex flex-col">
-            <span className="text-lg font-semibold tracking-tight">Notely</span>
-            <span className="text-xs text-muted-foreground">Smart notes</span>
+            <span className="sidebar-brand text-xl font-semibold text-sidebar-foreground">
+              Notely
+            </span>
+            <span className="text-[11px] uppercase tracking-widest text-sidebar-foreground/50">
+              Write beautifully
+            </span>
           </div>
         </div>
       </SidebarHeader>
 
-      <div className="px-3 py-2">
+      {/* New Note Button */}
+      <div className="px-4 pb-4">
         <Button
           onClick={handleNewNote}
-          className="w-full justify-start gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
+          className="w-full justify-center gap-2 bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90 shadow-md shadow-sidebar-primary/20 font-medium tracking-wide"
         >
           <Plus className="h-4 w-4" />
           New Note
@@ -98,40 +99,54 @@ export function AppSidebar({ folders = [] }: AppSidebarProps) {
       </div>
 
       <SidebarContent>
-        <ScrollArea className="h-full">
+        <ScrollArea className="h-full px-2">
+          {/* Main Navigation */}
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu>
-                {mainNavItems.map((item) => (
-                  <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={pathname === item.href}
-                      className={cn(
-                        "transition-colors",
-                        pathname === item.href && "bg-accent"
-                      )}
-                    >
-                      <Link href={item.href}>
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {mainNavItems.map((item) => {
+                  const isActive = pathname === item.href;
+                  return (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive}
+                        className={cn(
+                          "relative px-3 py-2.5 transition-all duration-200",
+                          isActive && "bg-sidebar-accent sidebar-item-active"
+                        )}
+                      >
+                        <Link href={item.href}>
+                          <item.icon className={cn(
+                            "h-4 w-4 transition-colors",
+                            isActive ? "text-sidebar-primary" : "text-sidebar-foreground/60"
+                          )} />
+                          <span className={cn(
+                            "font-medium",
+                            isActive ? "text-sidebar-foreground" : "text-sidebar-foreground/80"
+                          )}>
+                            {item.title}
+                          </span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
 
-          <Separator className="my-2" />
+          {/* Divider */}
+          <div className="my-4 mx-3 h-px bg-sidebar-border" />
 
+          {/* Folders Section */}
           <SidebarGroup>
-            <SidebarGroupLabel className="flex items-center justify-between">
-              <span>Folders</span>
+            <SidebarGroupLabel className="flex items-center justify-between px-3 text-[11px] uppercase tracking-widest text-sidebar-foreground/50 font-medium">
+              <span>Collections</span>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-5 w-5"
+                className="h-5 w-5 text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent"
                 onClick={() => {/* TODO: Create folder modal */}}
               >
                 <Plus className="h-3 w-3" />
@@ -140,10 +155,12 @@ export function AppSidebar({ folders = [] }: AppSidebarProps) {
             <SidebarGroupContent>
               <SidebarMenu>
                 {folders.length === 0 ? (
-                  <div className="px-3 py-4 text-center">
-                    <FolderClosed className="mx-auto h-8 w-8 text-muted-foreground/50" />
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      No folders yet
+                  <div className="px-3 py-6 text-center">
+                    <div className="mx-auto h-12 w-12 rounded-xl bg-sidebar-accent/50 flex items-center justify-center mb-3">
+                      <FolderClosed className="h-6 w-6 text-sidebar-foreground/30" />
+                    </div>
+                    <p className="text-xs text-sidebar-foreground/40">
+                      No collections yet
                     </p>
                   </div>
                 ) : (
@@ -151,21 +168,23 @@ export function AppSidebar({ folders = [] }: AppSidebarProps) {
                     <SidebarMenuItem key={folder.id}>
                       <SidebarMenuButton
                         onClick={() => toggleFolder(folder.id)}
-                        className="group"
+                        className="group px-3 py-2"
                       >
                         <motion.div
                           animate={{ rotate: expandedFolders.has(folder.id) ? 90 : 0 }}
                           transition={{ duration: 0.2 }}
                         >
-                          <ChevronRight className="h-4 w-4" />
+                          <ChevronRight className="h-3.5 w-3.5 text-sidebar-foreground/40" />
                         </motion.div>
                         <FolderClosed
                           className="h-4 w-4"
-                          style={{ color: folder.color || undefined }}
+                          style={{ color: folder.color || 'var(--sidebar-primary)' }}
                         />
-                        <span className="flex-1 truncate">{folder.name}</span>
+                        <span className="flex-1 truncate text-sidebar-foreground/80 font-medium">
+                          {folder.name}
+                        </span>
                         {folder._count && (
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-sidebar-accent text-sidebar-foreground/50">
                             {folder._count.notes}
                           </span>
                         )}
@@ -181,13 +200,13 @@ export function AppSidebar({ folders = [] }: AppSidebarProps) {
                             <SidebarMenuSub>
                               {folder.children.map((child) => (
                                 <SidebarMenuSubItem key={child.id}>
-                                  <SidebarMenuSubButton asChild>
+                                  <SidebarMenuSubButton asChild className="py-2">
                                     <Link href={`/notes?folder=${child.id}`}>
                                       <FolderClosed
                                         className="h-3 w-3"
-                                        style={{ color: child.color || undefined }}
+                                        style={{ color: child.color || 'var(--sidebar-primary)' }}
                                       />
-                                      <span>{child.name}</span>
+                                      <span className="text-sidebar-foreground/70">{child.name}</span>
                                     </Link>
                                   </SidebarMenuSubButton>
                                 </SidebarMenuSubItem>
@@ -205,28 +224,34 @@ export function AppSidebar({ folders = [] }: AppSidebarProps) {
         </ScrollArea>
       </SidebarContent>
 
-      <SidebarFooter className="p-3">
-        <Separator className="mb-3" />
+      {/* Footer with User */}
+      <SidebarFooter className="p-4">
+        <div className="h-px bg-sidebar-border mb-4" />
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <UserButton
               afterSignOutUrl="/"
               appearance={{
                 elements: {
-                  avatarBox: "h-8 w-8",
+                  avatarBox: "h-9 w-9 ring-2 ring-sidebar-primary/20",
                 },
               }}
             />
             <div className="flex flex-col">
-              <span className="text-sm font-medium">
+              <span className="text-sm font-medium text-sidebar-foreground">
                 {user?.firstName || user?.emailAddresses[0]?.emailAddress?.split("@")[0]}
               </span>
-              <span className="text-xs text-muted-foreground truncate max-w-[120px]">
+              <span className="text-[11px] text-sidebar-foreground/50 truncate max-w-[120px]">
                 {user?.emailAddresses[0]?.emailAddress}
               </span>
             </div>
           </div>
-          <Button variant="ghost" size="icon" asChild>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            asChild
+            className="text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+          >
             <Link href="/settings">
               <Settings className="h-4 w-4" />
             </Link>

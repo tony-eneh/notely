@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { ArrowRight, Sparkles, FileText, Search, Zap } from "lucide-react";
+import { ArrowRight, Feather, Sparkles, FileText, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
@@ -14,21 +14,21 @@ export default async function HomePage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 items-center">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600">
-              <Sparkles className="h-4 w-4 text-white" />
+      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-16 items-center">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20">
+              <Feather className="h-4 w-4 text-primary" />
             </div>
-            <span className="text-lg font-semibold">Notely</span>
+            <span className="font-display text-xl font-semibold">Notely</span>
           </div>
           <div className="ml-auto flex items-center gap-4">
-            <Button variant="ghost" asChild>
+            <Button variant="ghost" className="text-muted-foreground hover:text-foreground" asChild>
               <Link href="/sign-in">Sign In</Link>
             </Button>
-            <Button asChild>
+            <Button className="btn-shine shadow-md shadow-primary/20" asChild>
               <Link href="/sign-up">Get Started</Link>
             </Button>
           </div>
@@ -37,92 +37,90 @@ export default async function HomePage() {
 
       {/* Hero */}
       <main className="flex-1">
-        <section className="container flex flex-col items-center justify-center gap-4 py-24 text-center md:py-32">
-          <div className="flex items-center gap-2 rounded-full border bg-muted px-4 py-1.5 text-sm">
-            <Sparkles className="h-4 w-4 text-indigo-500" />
-            <span>AI-Powered Note Taking</span>
+        <section className="container flex flex-col items-center justify-center gap-6 py-28 text-center md:py-36">
+          <div className="flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm text-primary font-medium">
+            <Sparkles className="h-3.5 w-3.5" />
+            <span>AI-Powered Writing</span>
           </div>
-          <h1 className="max-w-4xl text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
-            Your thoughts,{" "}
-            <span className="bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">
-              supercharged
-            </span>{" "}
-            by AI
+          <h1 className="font-display max-w-4xl text-4xl font-semibold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl text-balance">
+            Where your thoughts{" "}
+            <span className="text-primary">
+              come alive
+            </span>
           </h1>
-          <p className="max-w-2xl text-lg text-muted-foreground md:text-xl">
-            A beautiful, minimal note-taking app with powerful AI features.
-            Write faster, think clearer, and organize smarter.
+          <p className="max-w-2xl text-lg text-muted-foreground md:text-xl leading-relaxed">
+            A refined writing experience with intelligent AI assistance. 
+            Capture ideas effortlessly, organize beautifully, and let your creativity flow.
           </p>
-          <div className="flex gap-4 pt-4">
-            <Button size="lg" asChild>
+          <div className="flex gap-4 pt-6">
+            <Button size="lg" className="btn-shine gap-2 px-6 shadow-lg shadow-primary/25" asChild>
               <Link href="/sign-up">
-                Start Writing Free
-                <ArrowRight className="ml-2 h-4 w-4" />
+                Start Writing
+                <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-            <Button size="lg" variant="outline" asChild>
+            <Button size="lg" variant="outline" className="px-6 border-border/50" asChild>
               <Link href="/sign-in">Sign In</Link>
             </Button>
           </div>
         </section>
 
         {/* Features */}
-        <section className="container py-24">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
-              Features that make writing magical
+        <section className="container py-28">
+          <div className="text-center mb-20">
+            <p className="text-[11px] uppercase tracking-[0.2em] text-primary font-medium mb-4">Features</p>
+            <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl mb-4 text-foreground">
+              Designed for thoughtful writing
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Everything you need to capture your ideas and make them better
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+              Every feature crafted to enhance your creative process
             </p>
           </div>
-          <div className="grid gap-8 md:grid-cols-3">
-            <div className="group rounded-2xl border p-8 transition-all hover:shadow-lg hover:border-indigo-200">
-              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
-                <Zap className="h-6 w-6" />
+          <div className="grid gap-6 md:grid-cols-3">
+            <div className="card-paper group rounded-2xl border border-border/50 p-8 transition-all duration-300 hover:shadow-xl hover:border-primary/20">
+              <div className="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20 text-primary transition-transform duration-300 group-hover:scale-110">
+                <Sparkles className="h-6 w-6" />
               </div>
-              <h3 className="mb-2 text-xl font-semibold">AI Autocomplete</h3>
-              <p className="text-muted-foreground">
-                Let AI continue your thoughts. Just pause typing and watch the
-                magic happen.
+              <h3 className="font-display mb-3 text-xl font-semibold text-foreground">AI Autocomplete</h3>
+              <p className="text-muted-foreground leading-relaxed">
+                Let AI continue your thoughts naturally. Pause typing and watch your ideas expand.
               </p>
             </div>
-            <div className="group rounded-2xl border p-8 transition-all hover:shadow-lg hover:border-indigo-200">
-              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100 text-purple-600">
+            <div className="card-paper group rounded-2xl border border-border/50 p-8 transition-all duration-300 hover:shadow-xl hover:border-primary/20">
+              <div className="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20 text-primary transition-transform duration-300 group-hover:scale-110">
                 <FileText className="h-6 w-6" />
               </div>
-              <h3 className="mb-2 text-xl font-semibold">Smart Summaries</h3>
-              <p className="text-muted-foreground">
-                Get instant AI-generated summaries of your notes. Perfect for
-                quick reviews.
+              <h3 className="font-display mb-3 text-xl font-semibold text-foreground">Smart Summaries</h3>
+              <p className="text-muted-foreground leading-relaxed">
+                Instant AI summaries of your notes. Perfect for quick reviews and sharing key insights.
               </p>
             </div>
-            <div className="group rounded-2xl border p-8 transition-all hover:shadow-lg hover:border-indigo-200">
-              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-pink-100 text-pink-600">
+            <div className="card-paper group rounded-2xl border border-border/50 p-8 transition-all duration-300 hover:shadow-xl hover:border-primary/20">
+              <div className="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20 text-primary transition-transform duration-300 group-hover:scale-110">
                 <Search className="h-6 w-6" />
               </div>
-              <h3 className="mb-2 text-xl font-semibold">Semantic Search</h3>
-              <p className="text-muted-foreground">
-                Find notes by meaning, not just keywords. AI understands what
-                you&apos;re looking for.
+              <h3 className="font-display mb-3 text-xl font-semibold text-foreground">Semantic Search</h3>
+              <p className="text-muted-foreground leading-relaxed">
+                Find notes by meaning, not just keywords. AI understands what you&apos;re looking for.
               </p>
             </div>
           </div>
         </section>
 
         {/* CTA */}
-        <section className="border-t bg-muted/50">
-          <div className="container py-24 text-center">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
-              Ready to transform your notes?
+        <section className="border-t border-border/40 bg-muted/30">
+          <div className="container py-28 text-center">
+            <p className="text-[11px] uppercase tracking-[0.2em] text-primary font-medium mb-4">Get Started</p>
+            <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl mb-4 text-foreground">
+              Begin your writing journey
             </h2>
-            <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
-              Join thousands of writers, thinkers, and creators using Notely.
+            <p className="text-lg text-muted-foreground mb-10 max-w-xl mx-auto leading-relaxed">
+              Join thoughtful writers who&apos;ve transformed their note-taking experience.
             </p>
-            <Button size="lg" asChild>
+            <Button size="lg" className="btn-shine gap-2 px-8 shadow-lg shadow-primary/25" asChild>
               <Link href="/sign-up">
-                Get Started for Free
-                <ArrowRight className="ml-2 h-4 w-4" />
+                Get Started Free
+                <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
           </div>
@@ -130,16 +128,16 @@ export default async function HomePage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t py-8">
+      <footer className="border-t border-border/40 py-10">
         <div className="container flex flex-col items-center justify-between gap-4 md:flex-row">
-          <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded bg-gradient-to-br from-indigo-500 to-purple-600">
-              <Sparkles className="h-3 w-3 text-white" />
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 ring-1 ring-primary/20">
+              <Feather className="h-4 w-4 text-primary" />
             </div>
-            <span className="font-semibold">Notely</span>
+            <span className="font-display font-semibold">Notely</span>
           </div>
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} Notely. All rights reserved.
+            &copy; {new Date().getFullYear()} Notely. Crafted with care.
           </p>
         </div>
       </footer>
