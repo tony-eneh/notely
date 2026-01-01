@@ -179,7 +179,7 @@ model Tag {
 #### High Priority
 - [x] Offline editing with background sync — implemented via Workbox runtime caching + Background Sync queues; UI badges + toasts for offline/queued/syncing states
 - [x] Share Target API — manifest share_target added; server route creates a note from shared title/text/url and redirects to it
-- [ ] Push Notifications — reminders, daily prompts, future collaboration alerts; Web Push + notification service
+- [x] Push Notifications — Web Push subscription storage, VAPID-powered test send, custom SW push handler, Settings UI to enable/test
 
 #### Medium Priority
 4. **Periodic Background Sync**
