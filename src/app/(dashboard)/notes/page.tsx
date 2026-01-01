@@ -44,7 +44,7 @@ export default function NotesPage() {
   const Icon = getIcon();
 
   return (
-    <div className="container py-8 max-w-6xl">
+    <div className="px-6 md:px-10 lg:px-16 py-8 max-w-7xl mx-auto">
       {/* Page Header */}
       <motion.div 
         className="flex items-start justify-between mb-10"

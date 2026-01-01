@@ -17,7 +17,7 @@ export default async function HomePage() {
     <div className="flex min-h-screen flex-col bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center">
+        <div className="container mx-auto px-6 md:px-8 flex h-16 items-center">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20">
               <Feather className="h-4 w-4 text-primary" />
@@ -37,7 +37,7 @@ export default async function HomePage() {
 
       {/* Hero */}
       <main className="flex-1">
-        <section className="container flex flex-col items-center justify-center gap-6 py-28 text-center md:py-36">
+        <section className="container mx-auto px-6 md:px-8 flex flex-col items-center justify-center gap-6 py-28 text-center md:py-36">
           <div className="flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm text-primary font-medium">
             <Sparkles className="h-3.5 w-3.5" />
             <span>AI-Powered Writing</span>
@@ -66,7 +66,7 @@ export default async function HomePage() {
         </section>
 
         {/* Features */}
-        <section className="container py-28">
+        <section className="container mx-auto px-6 md:px-8 py-28">
           <div className="text-center mb-20">
             <p className="text-[11px] uppercase tracking-[0.2em] text-primary font-medium mb-4">Features</p>
             <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl mb-4 text-foreground">
@@ -109,7 +109,7 @@ export default async function HomePage() {
 
         {/* CTA */}
         <section className="border-t border-border/40 bg-muted/30">
-          <div className="container py-28 text-center">
+          <div className="container mx-auto px-6 md:px-8 py-28 text-center">
             <p className="text-[11px] uppercase tracking-[0.2em] text-primary font-medium mb-4">Get Started</p>
             <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl mb-4 text-foreground">
               Begin your writing journey
@@ -129,7 +129,7 @@ export default async function HomePage() {
 
       {/* Footer */}
       <footer className="border-t border-border/40 py-10">
-        <div className="container flex flex-col items-center justify-between gap-4 md:flex-row">
+        <div className="container mx-auto px-6 md:px-8 flex flex-col items-center justify-between gap-4 md:flex-row">
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 ring-1 ring-primary/20">
               <Feather className="h-4 w-4 text-primary" />
