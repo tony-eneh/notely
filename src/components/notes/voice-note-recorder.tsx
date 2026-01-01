@@ -225,9 +225,26 @@ export function VoiceNoteRecorder({
       setState("idle");
     } catch (error) {
       console.error("Transcription error:", error);
+      
+      let errorTitle = "Transcription failed";
+      let errorDescription = "Please try again";
+      
+      if (error instanceof Error) {
+        // Check if the error message contains specific error codes
+        if (error.message.includes("quota") || error.message.includes("429")) {
+          errorTitle = "AI Service Unavailable";
+          errorDescription = "The AI service quota has been exceeded. Please try again later or contact support.";
+        } else if (error.message.includes("rate limit")) {
+          errorTitle = "Too Many Requests";
+          errorDescription = "Please wait a moment before trying again.";
+        } else {
+          errorDescription = error.message;
+        }
+      }
+      
       toast({
-        title: "Transcription failed",
-        description: error instanceof Error ? error.message : "Please try again",
+        title: errorTitle,
+        description: errorDescription,
         variant: "destructive",
       });
       setState("stopped");

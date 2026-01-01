@@ -94,16 +94,49 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("[TRANSCRIBE]", error);
     
-    // Handle specific OpenAI errors
+    // Handle OpenAI API errors
+    if (error && typeof error === 'object' && 'status' in error) {
+      const apiError = error as { status: number; code?: string; message?: string };
+      
+      // Quota exceeded
+      if (apiError.status === 429 || apiError.code === 'insufficient_quota') {
+        return NextResponse.json(
+          { 
+            error: "AI service quota exceeded. Please check your OpenAI API billing and usage limits.",
+            code: "quota_exceeded"
+          },
+          { status: 429 }
+        );
+      }
+      
+      // Rate limit
+      if (apiError.code === 'rate_limit_exceeded') {
+        return NextResponse.json(
+          { 
+            error: "Too many requests. Please wait a moment and try again.",
+            code: "rate_limit"
+          },
+          { status: 429 }
+        );
+      }
+    }
+    
+    // Handle generic OpenAI errors
     if (error instanceof Error && error.message.includes("audio")) {
       return NextResponse.json(
-        { error: "Audio transcription failed. Please try again with a clearer recording." },
+        { 
+          error: "Audio transcription failed. Please try again with a clearer recording.",
+          code: "transcription_failed"
+        },
         { status: 500 }
       );
     }
     
     return NextResponse.json(
-      { error: "Failed to process audio" },
+      { 
+        error: "Failed to process audio. Please try again.",
+        code: "processing_failed"
+      },
       { status: 500 }
     );
   }
