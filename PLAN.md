@@ -158,15 +158,63 @@ model Tag {
 - [x] Implement summarization feature
 - [x] Implement smart search with embeddings
 
-### Phase 4: Voice Notes (In Progress)
-- [ ] Setup Vercel Blob storage for audio files
-- [ ] Update database schema with audio fields
-- [ ] Create audio transcription API (OpenAI Whisper)
-- [ ] Build voice recorder component
-- [ ] Integrate voice notes into editor
-- [ ] Add audio playback UI
+### Phase 4: Voice Notes ✓
+- [x] Setup Vercel Blob storage for audio files
+- [x] Update database schema with audio fields
+- [x] Create audio transcription API (OpenAI Whisper)
+- [x] Build voice recorder component
+- [x] Integrate voice notes into editor
+- [x] Add audio playback UI
 
-### Phase 5: Polish (Future)
+### Phase 5: Progressive Web App (PWA) ✓
+- [x] Install and configure next-pwa package
+- [x] Create web app manifest with proper metadata
+- [x] Generate PWA icons (192x192, 512x512, maskable)
+- [x] Configure offline caching strategy
+- [x] Add PWA meta tags and theme colors
+- [x] Align PWA colors with editorial theme
+
+### Phase 6: Enhanced PWA Features (Next Steps)
+
+#### High Priority
+1. **Offline Editing with Background Sync**
+   - Allow users to edit notes offline
+   - Queue changes and auto-sync when connection restored
+   - Prevents data loss during poor connectivity
+   - Implementation: Service Worker Background Sync API + IndexedDB
+
+2. **Share Target API**
+   - Let users share text/links from other apps directly to Notely
+   - Creates new note with shared content
+   - Great for capturing ideas on-the-go
+   - Implementation: Add `share_target` to manifest.json + API endpoint
+
+3. **Push Notifications**
+   - Reminders for notes with due dates/tags
+   - Daily writing prompts to encourage regular use
+   - Collaboration notifications (future multi-user feature)
+   - Implementation: Web Push API + notification service
+
+#### Medium Priority
+4. **Periodic Background Sync**
+   - Auto-backup notes in background
+   - Pre-fetch AI-generated summaries while app closed
+   - Keep content fresh without user interaction
+   - Implementation: Periodic Background Sync API
+
+5. **File Handling**
+   - Register as handler for `.md` or `.note` files
+   - Open note files directly from file system
+   - Better desktop integration
+   - Implementation: File Handling API in manifest
+
+#### Nice-to-Have
+- **Badging API**: Show unread/unsynced note count on app icon
+- **Web Share API**: Share notes to other apps
+- **Contact Picker**: Add collaborators easily (future feature)
+- **Clipboard API**: Enhanced copy/paste with formatting
+
+### Phase 7: Polish (Future)
 - [ ] Add animations with Framer Motion
 - [ ] Implement dark/light theme
 - [ ] Add keyboard shortcuts
@@ -209,7 +257,28 @@ model Note {
 - Vercel Blob: Free tier 500GB/month, then $0.15/GB
 - No usage limits initially (to be added if needed)
 
-### Phase 4: Polish (Future)
+## PWA Configuration
+
+### Features Implemented
+- **Installability**: Users can install Notely on desktop/mobile
+- **Offline Support**: Automatic caching for offline viewing
+- **App Shortcuts**: "New Note" shortcut in installed app menu
+- **Theme Colors**: Matches editorial theme (#faf8f5 background, #d4a866 amber gold)
+- **Manifest**: Complete with icons, categories, and display settings
+
+### Icon Assets
+- Standard icons: 192x192, 512x512
+- Maskable icons: 192x192, 512x512 (with safe zone)
+- Generated from favicon.svg using Sharp
+- Script: `npm run generate-icons` to regenerate
+
+### Service Worker
+- Configured with @ducanh2912/next-pwa
+- Caches static assets and pages
+- Reloads when online after being offline
+- Disabled in development mode
+
+### Phase 7: Polish (Future)
 - [ ] Add animations with Framer Motion
 - [ ] Implement dark/light theme
 - [ ] Add keyboard shortcuts
