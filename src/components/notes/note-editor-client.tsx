@@ -2,13 +2,27 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Save, Loader2, Mic } from "lucide-react";
+import {
+  ArrowLeft,
+  Save,
+  Loader2,
+  Mic,
+  Sparkles,
+  Wand2,
+  FileText,
+} from "lucide-react";
 import Link from "next/link";
 import debounce from "lodash.debounce";
 
 import { PlateEditor } from "@/components/editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { Note } from "@/types";
 import { VoiceNoteRecorder, AudioPlayer } from "@/components/notes";
@@ -29,7 +43,11 @@ export function NoteEditorClient({ note, isNew = false }: NoteEditorClientProps)
   const [hasChanges, setHasChanges] = useState(false);
   const [noteId, setNoteId] = useState(note?.id);
   const [isSummarizing, setIsSummarizing] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
   const [summary, setSummary] = useState(note?.summary || "");
+  // Plate seeds its value once on mount, so content inserted programmatically
+  // (AI continuation, voice transcription) needs a remount to become visible.
+  const [editorVersion, setEditorVersion] = useState(0);
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
   const [audioUrl, setAudioUrl] = useState(note?.audioUrl || "");
   const [audioSize, setAudioSize] = useState(note?.audioSize || undefined);
@@ -82,12 +100,24 @@ export function NoteEditorClient({ note, isNew = false }: NoteEditorClientProps)
       if (!id) return;
 
       try {
-        await fetch(`/api/notes/${id}`, {
+        const response = await fetch(`/api/notes/${id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         });
         setHasChanges(false);
+
+        // The service worker parks writes it could not deliver and answers
+        // 202, so a successful fetch does not always mean a saved note.
+        if (response.status === 202 && !offlineQueuedRef.current) {
+          offlineQueuedRef.current = true;
+          setQueuedSync(true);
+          localStorage.setItem("notely-sync-queued", "1");
+          toast({
+            title: "Offline",
+            description: "Changes queued and will sync when you're back online.",
+          });
+        }
       } catch (error) {
         if (!navigator.onLine && !offlineQueuedRef.current) {
           offlineQueuedRef.current = true;
@@ -169,10 +199,20 @@ export function NoteEditorClient({ note, isNew = false }: NoteEditorClientProps)
 
         if (!response.ok) throw new Error("Failed to save note");
 
-        toast({
-          title: "Note saved",
-          description: "Your changes have been saved.",
-        });
+        if (response.status === 202) {
+          offlineQueuedRef.current = true;
+          setQueuedSync(true);
+          localStorage.setItem("notely-sync-queued", "1");
+          toast({
+            title: "Offline",
+            description: "Changes queued and will sync when you're back online.",
+          });
+        } else {
+          toast({
+            title: "Note saved",
+            description: "Your changes have been saved.",
+          });
+        }
       }
 
       setHasChanges(false);
@@ -249,12 +289,69 @@ export function NoteEditorClient({ note, isNew = false }: NoteEditorClientProps)
     }
   };
 
+  // Appends blocks to the document and forces the editor to pick them up.
+  const appendBlocks = (text: string) => {
+    const blocks = text
+      .split(/\n{2,}/)
+      .map((paragraph) => paragraph.trim())
+      .filter(Boolean)
+      .map((paragraph) => ({ type: "p", children: [{ text: paragraph }] }));
+
+    if (!blocks.length) return;
+
+    setContent((prev) => [...prev, ...blocks]);
+    setEditorVersion((v) => v + 1);
+    setHasChanges(true);
+  };
+
   const handleAiComplete = async () => {
-    // This will be implemented with streaming
-    toast({
-      title: "Coming soon",
-      description: "AI autocomplete is being implemented.",
-    });
+    if (isCompleting) return;
+
+    setIsCompleting(true);
+
+    try {
+      const response = await fetch("/api/ai/complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      });
+
+      if (!response.ok || !response.body) {
+        throw new Error("Failed to generate continuation");
+      }
+
+      // The route streams plain text back; collect it, then insert once so the
+      // editor is not remounted on every chunk.
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let completion = "";
+
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        completion += decoder.decode(value, { stream: true });
+      }
+      completion += decoder.decode();
+
+      if (!completion.trim()) {
+        throw new Error("Empty completion");
+      }
+
+      appendBlocks(completion);
+
+      toast({
+        title: "Continued writing",
+        description: "AI added a continuation to your note.",
+      });
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to continue writing. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCompleting(false);
+    }
   };
 
   const handleTranscriptionComplete = (data: {
@@ -269,14 +366,9 @@ export function NoteEditorClient({ note, isNew = false }: NoteEditorClientProps)
     setAudioDuration(data.audioDuration);
     setTranscriptionStatus("completed");
     
-    // Add transcription to content
-    const transcriptionContent = [
-      ...content,
-      { type: "p", children: [{ text: data.transcription }] }
-    ];
-    setContent(transcriptionContent);
-    setHasChanges(true);
-    
+    // Add transcription to content (remounts the editor so it shows up)
+    appendBlocks(data.transcription);
+
     // Close recorder
     setShowVoiceRecorder(false);
     
@@ -311,14 +403,41 @@ export function NoteEditorClient({ note, isNew = false }: NoteEditorClientProps)
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Button 
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-indigo-600 hover:text-indigo-700"
+                disabled={isCompleting || isSummarizing}
+              >
+                {isCompleting || isSummarizing ? (
+                  <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                ) : (
+                  <Sparkles className="mr-2 h-3 w-3" />
+                )}
+                <span className="hidden sm:inline">AI</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleAiComplete} disabled={isCompleting}>
+                <Wand2 className="mr-2 h-4 w-4" />
+                {isCompleting ? "Writing..." : "Continue writing"}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleAiSummarize} disabled={isSummarizing}>
+                <FileText className="mr-2 h-4 w-4" />
+                {isSummarizing ? "Summarizing..." : "Summarize note"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button
             onClick={() => setShowVoiceRecorder(true)}
             variant="outline"
             size="sm"
             className="h-8"
           >
             <Mic className="mr-2 h-3 w-3" />
-            Voice Note
+            <span className="hidden sm:inline">Voice Note</span>
           </Button>
           <Button 
             onClick={handleSave} 
@@ -387,6 +506,7 @@ export function NoteEditorClient({ note, isNew = false }: NoteEditorClientProps)
 
           {/* Editor */}
           <PlateEditor
+            key={editorVersion}
             initialValue={content}
             onChange={handleContentChange}
             onSave={handleSave}

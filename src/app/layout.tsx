@@ -3,6 +3,7 @@ import { Playfair_Display, DM_Sans } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
+import { ServiceWorkerRegister } from "@/components/service-worker-register";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -55,6 +56,7 @@ export default function RootLayout({
             {children}
             <Toaster position="bottom-right" richColors />
           </TooltipProvider>
+          <ServiceWorkerRegister />
         </body>
       </html>
     </ClerkProvider>

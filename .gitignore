@@ -41,7 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 # pwa
-**/public/sw.js
+# public/sw.js is hand-written and committed; only build output is ignored here.
 **/public/workbox-*.js
 **/public/worker-*.js
 **/public/sw.js.map

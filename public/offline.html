@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Offline · Notely</title>
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#d4a866" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #faf9f7;
+        --fg: #1c1a17;
+        --muted: #6b645b;
+        --accent: #d4a866;
+        --card: #ffffff;
+        --border: rgba(0, 0, 0, 0.08);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #14120f;
+          --fg: #f4f1ec;
+          --muted: #a49c90;
+          --card: #1d1a16;
+          --border: rgba(255, 255, 255, 0.1);
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: "DM Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+          sans-serif;
+      }
+      .card {
+        max-width: 26rem;
+        width: 100%;
+        text-align: center;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 40px 28px;
+      }
+      .badge {
+        width: 56px;
+        height: 56px;
+        margin: 0 auto 20px;
+        border-radius: 16px;
+        display: grid;
+        place-items: center;
+        background: rgba(212, 168, 102, 0.14);
+        border: 1px solid rgba(212, 168, 102, 0.3);
+      }
+      h1 {
+        margin: 0 0 10px;
+        font-size: 1.4rem;
+        letter-spacing: -0.01em;
+      }
+      p {
+        margin: 0 0 24px;
+        color: var(--muted);
+        line-height: 1.6;
+        font-size: 0.95rem;
+      }
+      button {
+        font: inherit;
+        font-weight: 600;
+        color: #2a1f0e;
+        background: var(--accent);
+        border: 0;
+        border-radius: 10px;
+        padding: 11px 22px;
+        cursor: pointer;
+      }
+      button:hover {
+        filter: brightness(1.05);
+      }
+      .status {
+        margin-top: 18px;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="badge" aria-hidden="true">
+        <svg
+          width="26"
+          height="26"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#d4a866"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M1 1l22 22" />
+          <path d="M16.72 11.06A10.94 10.94 0 0119 12.55" />
+          <path d="M5 12.55a10.94 10.94 0 015.17-2.39" />
+          <path d="M10.71 5.05A16 16 0 0122.58 9" />
+          <path d="M1.42 9a15.91 15.91 0 014.7-2.88" />
+          <path d="M8.53 16.11a6 6 0 016.95 0" />
+          <path d="M12 20h.01" />
+        </svg>
+      </div>
+      <h1>You're offline</h1>
+      <p>
+        Notely can't reach the network right now. Notes you've already opened stay
+        available, and any edits you make are queued and sync automatically once
+        you're back online.
+      </p>
+      <button type="button" onclick="location.reload()">Try again</button>
+      <div class="status" id="status"></div>
+    </div>
+
+    <script>
+      const status = document.getElementById("status");
+      function render() {
+        status.textContent = navigator.onLine
+          ? "Connection restored — reloading…"
+          : "Waiting for a connection…";
+        if (navigator.onLine) setTimeout(() => location.reload(), 600);
+      }
+      window.addEventListener("online", render);
+      window.addEventListener("offline", render);
+      render();
+    </script>
+  </body>
+</html>
