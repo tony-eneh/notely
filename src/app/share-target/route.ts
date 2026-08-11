@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
+import { ensureUser } from "@/lib/user";
+import { extractPlainText } from "@/lib/content";
 
 export async function POST(request: Request) {
   try {
@@ -20,13 +22,9 @@ export async function POST(request: Request) {
     const sharedUrl = (formData.get("url") as string) || "";
 
     // Ensure user exists (webhook may not have run yet)
-    await db.user.upsert({
-      where: { id: userId },
-      create: { id: userId, email: "" },
-      update: {},
-    });
+    await ensureUser(userId);
 
-    const blocks: any[] = [];
+    const blocks: { type: string; children: { text: string }[] }[] = [];
 
     blocks.push({
       type: "h2",
@@ -51,17 +49,7 @@ export async function POST(request: Request) {
       blocks.push({ type: "p", children: [{ text: "" }] });
     }
 
-    const plainText = blocks
-      .map((node) => {
-        if (node.children?.length) {
-          return node.children
-            .map((child: any) => (typeof child.text === "string" ? child.text : ""))
-            .join("");
-        }
-        return "";
-      })
-      .join("\n")
-      .trim();
+    const plainText = extractPlainText(blocks);
 
     const note = await db.note.create({
       data: {

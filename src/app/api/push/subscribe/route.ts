@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
+import { ensureUser } from "@/lib/user";
 
 interface WebPushSubscription {
   endpoint: string;
@@ -24,11 +25,7 @@ export async function POST(request: Request) {
     }
 
     // Ensure user exists
-    await db.user.upsert({
-      where: { id: userId },
-      create: { id: userId, email: "" },
-      update: {},
-    });
+    await ensureUser(userId);
 
     await db.pushSubscription.upsert({
       where: { endpoint: subscription.endpoint },

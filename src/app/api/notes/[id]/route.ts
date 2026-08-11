@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { extractPlainText } from "@/lib/content";
 
 // GET /api/notes/[id] - Get a specific note
 export async function GET(
@@ -153,19 +154,4 @@ export async function DELETE(
       { status: 500 }
     );
   }
-}
-
-// Helper function to extract plain text from Plate content
-function extractPlainText(content: any): string {
-  if (!content || !Array.isArray(content)) return "";
-
-  const extractText = (node: any): string => {
-    if (typeof node.text === "string") return node.text;
-    if (Array.isArray(node.children)) {
-      return node.children.map(extractText).join("");
-    }
-    return "";
-  };
-
-  return content.map(extractText).join("\n").trim();
 }

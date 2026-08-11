@@ -3,69 +3,74 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Note } from "@/types";
 
-export function useNotes(
-  initialFilter?: string,
-  initialQuery?: string,
-  initialUseAi = false
-) {
+export interface NotesQuery {
+  filter?: string;
+  query?: string;
+  useAi?: boolean;
+  folderId?: string;
+}
+
+export function useNotes(options: NotesQuery = {}) {
+  const { filter, query, useAi = false, folderId } = options;
+
   const [notes, setNotes] = useState<Note[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [aiResponse, setAiResponse] = useState<string | null>(null);
 
-  // Guards against out-of-order responses when the filter/query changes fast.
+  // Guards against out-of-order responses when the query changes fast.
   const requestIdRef = useRef(0);
 
-  const fetchNotes = useCallback(
-    async (filter?: string, query?: string, useAi = false) => {
-      const requestId = ++requestIdRef.current;
-      const isCurrent = () => requestId === requestIdRef.current;
+  const fetchNotes = useCallback(async (params: NotesQuery = {}) => {
+    const requestId = ++requestIdRef.current;
+    const isCurrent = () => requestId === requestIdRef.current;
 
-      setIsLoading(true);
-      setError(null);
-      setAiResponse(null);
+    setIsLoading(true);
+    setError(null);
+    setAiResponse(null);
 
-      try {
-        // Semantic search goes through the AI endpoint; everything else is a
-        // plain filtered/text query against /api/notes.
-        if (query && useAi) {
-          const response = await fetch("/api/ai/search", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ query, useAi: true }),
-          });
-          if (!response.ok) throw new Error("Failed to search notes");
-
-          const data = await response.json();
-          if (!isCurrent()) return;
-          setNotes(data.notes ?? []);
-          setAiResponse(data.aiResponse || null);
-          return;
-        }
-
-        const params = new URLSearchParams();
-        if (filter) params.set("filter", filter);
-        if (query) params.set("q", query);
-
-        const response = await fetch(`/api/notes?${params}`);
-        if (!response.ok) throw new Error("Failed to fetch notes");
+    try {
+      // Semantic search goes through the AI endpoint; everything else is a
+      // plain filtered/text query against /api/notes.
+      if (params.query && params.useAi) {
+        const response = await fetch("/api/ai/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: params.query, useAi: true }),
+        });
+        if (!response.ok) throw new Error("Failed to search notes");
 
         const data = await response.json();
         if (!isCurrent()) return;
-        setNotes(data);
-      } catch (err) {
-        if (!isCurrent()) return;
-        setError(err instanceof Error ? err.message : "An error occurred");
-      } finally {
-        if (isCurrent()) setIsLoading(false);
+        setNotes(data.notes ?? []);
+        setAiResponse(data.aiResponse || null);
+        return;
       }
-    },
-    []
-  );
 
+      const search = new URLSearchParams();
+      if (params.filter) search.set("filter", params.filter);
+      if (params.query) search.set("q", params.query);
+      if (params.folderId) search.set("folderId", params.folderId);
+
+      const response = await fetch(`/api/notes?${search}`);
+      if (!response.ok) throw new Error("Failed to fetch notes");
+
+      const data = await response.json();
+      if (!isCurrent()) return;
+      setNotes(data);
+    } catch (err) {
+      if (!isCurrent()) return;
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      if (isCurrent()) setIsLoading(false);
+    }
+  }, []);
+
+  // Depends on primitives, not the options object, so a fresh literal from the
+  // caller does not retrigger the fetch on every render.
   useEffect(() => {
-    fetchNotes(initialFilter, initialQuery, initialUseAi);
-  }, [initialFilter, initialQuery, initialUseAi, fetchNotes]);
+    fetchNotes({ filter, query, useAi, folderId });
+  }, [filter, query, useAi, folderId, fetchNotes]);
 
   const createNote = async (data: Partial<Note>) => {
     const response = await fetch("/api/notes", {
@@ -112,8 +117,7 @@ export function useNotes(
     const note = notes.find((n) => n.id === id);
     if (!note) return;
 
-    const isArchived = !note.isArchived;
-    await updateNote(id, { isArchived });
+    await updateNote(id, { isArchived: !note.isArchived });
 
     // The archive view lists archived notes and every other view lists
     // unarchived ones, so a toggled note no longer belongs in the current list.

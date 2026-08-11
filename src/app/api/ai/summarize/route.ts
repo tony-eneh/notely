@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { generateText } from "ai";
 import { defaultModel } from "@/lib/ai";
 import { db } from "@/lib/db";
+import { extractPlainText } from "@/lib/content";
 
 export async function POST(request: Request) {
   try {
@@ -36,12 +37,17 @@ Rules:
       prompt: `Summarize this note:\n\n${plainText}`,
     });
 
-    // Save summary to database if noteId provided
+    // Save summary to database if noteId provided. updateMany scopes the write
+    // to the owner without throwing when the note is not theirs.
     if (noteId) {
-      await db.note.update({
+      const { count } = await db.note.updateMany({
         where: { id: noteId, userId },
         data: { summary },
       });
+
+      if (count === 0) {
+        return NextResponse.json({ error: "Note not found" }, { status: 404 });
+      }
     }
 
     return NextResponse.json({ summary });
@@ -52,19 +58,4 @@ Rules:
       { status: 500 }
     );
   }
-}
-
-// Helper function to extract plain text from Plate content
-function extractPlainText(content: any): string {
-  if (!content || !Array.isArray(content)) return "";
-
-  const extractText = (node: any): string => {
-    if (typeof node.text === "string") return node.text;
-    if (Array.isArray(node.children)) {
-      return node.children.map(extractText).join("");
-    }
-    return "";
-  };
-
-  return content.map(extractText).join("\n").trim();
 }

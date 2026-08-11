@@ -216,7 +216,7 @@ export function NoteEditorClient({ note, isNew = false }: NoteEditorClientProps)
       }
 
       setHasChanges(false);
-    } catch (error) {
+    } catch {
       if (!navigator.onLine) {
         offlineQueuedRef.current = true;
         setQueuedSync(true);
@@ -278,7 +278,7 @@ export function NoteEditorClient({ note, isNew = false }: NoteEditorClientProps)
         title: "Summary generated",
         description: "AI has summarized your note.",
       });
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to generate summary. Please try again.",

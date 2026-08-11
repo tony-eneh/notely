@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { embed, cosineSimilarity } from "ai";
+import { embed, embedMany, cosineSimilarity } from "ai";
 import { embeddingModel, defaultModel } from "@/lib/ai";
 import { generateText } from "ai";
 import { db } from "@/lib/db";
@@ -15,6 +15,12 @@ interface NoteWithScore {
   note: NoteWithRelations;
   similarity: number;
 }
+
+// Upper bound on notes embedded for one semantic query.
+const MAX_SEMANTIC_CANDIDATES = 100;
+
+// Embedding a batch plus a follow-up completion can exceed the 10s default.
+export const maxDuration = 60;
 
 export async function POST(request: Request) {
   try {
@@ -69,7 +75,8 @@ async function textSearch(userId: string, query: string) {
 
 // AI-powered semantic search using embeddings
 async function semanticSearch(userId: string, query: string) {
-  // Get all user's notes
+  // Embeddings are computed per request, so cap the candidate set to keep the
+  // request inside the serverless time limit. Newest notes win.
   const allNotes = await db.note.findMany({
     where: {
       userId,
@@ -80,6 +87,8 @@ async function semanticSearch(userId: string, query: string) {
       folder: true,
       tags: true,
     },
+    orderBy: { updatedAt: "desc" },
+    take: MAX_SEMANTIC_CANDIDATES,
   });
 
   if (allNotes.length === 0) {
@@ -92,19 +101,18 @@ async function semanticSearch(userId: string, query: string) {
     value: query,
   });
 
-  // Generate embeddings for all notes and calculate similarity
-  const notesWithScores: NoteWithScore[] = await Promise.all(
-    allNotes.map(async (note) => {
-      const text = `${note.title}\n${note.plainText || ""}`;
-      const { embedding: noteEmbedding } = await embed({
-        model: embeddingModel,
-        value: text.slice(0, 8000), // Limit text length for embeddings
-      });
+  // One batched call rather than one request per note.
+  const { embeddings: noteEmbeddings } = await embedMany({
+    model: embeddingModel,
+    values: allNotes.map((note) =>
+      `${note.title}\n${note.plainText || ""}`.slice(0, 8000)
+    ),
+  });
 
-      const similarity = cosineSimilarity(queryEmbedding, noteEmbedding);
-      return { note: note as NoteWithRelations, similarity };
-    })
-  );
+  const notesWithScores: NoteWithScore[] = allNotes.map((note, index) => ({
+    note: note as NoteWithRelations,
+    similarity: cosineSimilarity(queryEmbedding, noteEmbeddings[index]),
+  }));
 
   // Sort by similarity and filter out low scores
   const relevantNotes = notesWithScores

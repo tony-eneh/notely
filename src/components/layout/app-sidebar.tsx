@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { UserButton, useUser } from "@clerk/nextjs";
 import {
   FileText,
@@ -35,12 +35,13 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { CreateFolderDialog } from "./create-folder-dialog";
 import { Folder } from "@/types";
 
 const mainNavItems = [
-  { title: "All Notes", href: "/notes", icon: FileText },
-  { title: "Favorites", href: "/notes?filter=favorites", icon: Star },
-  { title: "Archive", href: "/notes?filter=archive", icon: Archive },
+  { title: "All Notes", href: "/notes", icon: FileText, filter: null },
+  { title: "Favorites", href: "/notes?filter=favorites", icon: Star, filter: "favorites" },
+  { title: "Archive", href: "/notes?filter=archive", icon: Archive, filter: "archive" },
 ];
 
 interface AppSidebarProps {
@@ -49,10 +50,14 @@ interface AppSidebarProps {
 
 export function AppSidebar({ folders = [] }: AppSidebarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const { user } = useUser();
+  const activeFilter = searchParams.get("filter");
+  const activeFolderId = searchParams.get("folderId");
    const { isMobile, setOpenMobile } = useSidebar();
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [createFolderOpen, setCreateFolderOpen] = useState(false);
 
   const closeMobile = () => {
     if (isMobile) setOpenMobile(false);
@@ -112,7 +117,12 @@ export function AppSidebar({ folders = [] }: AppSidebarProps) {
             <SidebarGroupContent>
               <SidebarMenu>
                 {mainNavItems.map((item) => {
-                  const isActive = pathname === item.href;
+                  // pathname is "/notes" for all three, so the filter param is
+                  // what distinguishes them.
+                  const isActive =
+                    pathname === "/notes" &&
+                    !activeFolderId &&
+                    activeFilter === item.filter;
                   return (
                     <SidebarMenuItem key={item.href}>
                       <SidebarMenuButton
@@ -154,7 +164,8 @@ export function AppSidebar({ folders = [] }: AppSidebarProps) {
                 variant="ghost"
                 size="icon"
                 className="h-5 w-5 text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-                onClick={() => {/* TODO: Create folder modal */}}
+                onClick={() => setCreateFolderOpen(true)}
+                aria-label="New collection"
               >
                 <Plus className="h-3 w-3" />
               </Button>
@@ -173,29 +184,46 @@ export function AppSidebar({ folders = [] }: AppSidebarProps) {
                 ) : (
                   folders.map((folder) => (
                     <SidebarMenuItem key={folder.id}>
-                      <SidebarMenuButton
-                        onClick={() => toggleFolder(folder.id)}
-                        className="group px-3 py-2"
-                      >
-                        <motion.div
-                          animate={{ rotate: expandedFolders.has(folder.id) ? 90 : 0 }}
-                          transition={{ duration: 0.2 }}
+                      <div className="flex items-center gap-0.5">
+                      {folder.children && folder.children.length > 0 ? (
+                        <button
+                          type="button"
+                          onClick={() => toggleFolder(folder.id)}
+                          aria-expanded={expandedFolders.has(folder.id)}
+                          aria-label={`${expandedFolders.has(folder.id) ? "Collapse" : "Expand"} ${folder.name}`}
+                          className="flex h-7 w-5 shrink-0 items-center justify-center rounded hover:bg-sidebar-accent"
                         >
-                          <ChevronRight className="h-3.5 w-3.5 text-sidebar-foreground/40" />
-                        </motion.div>
-                        <FolderClosed
-                          className="h-4 w-4"
-                          style={{ color: folder.color || 'var(--sidebar-primary)' }}
-                        />
-                        <span className="flex-1 truncate text-sidebar-foreground/80 font-medium">
-                          {folder.name}
-                        </span>
-                        {folder._count && (
-                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-sidebar-accent text-sidebar-foreground/50">
-                            {folder._count.notes}
+                          <motion.div
+                            animate={{ rotate: expandedFolders.has(folder.id) ? 90 : 0 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <ChevronRight className="h-3.5 w-3.5 text-sidebar-foreground/40" />
+                          </motion.div>
+                        </button>
+                      ) : (
+                        <span className="h-7 w-5 shrink-0" aria-hidden="true" />
+                      )}
+                      <SidebarMenuButton
+                        asChild
+                        isActive={activeFolderId === folder.id}
+                        className="group min-w-0 flex-1 px-2 py-2"
+                      >
+                        <Link href={`/notes?folderId=${folder.id}`} onClick={closeMobile}>
+                          <FolderClosed
+                            className="h-4 w-4 shrink-0"
+                            style={{ color: folder.color || 'var(--sidebar-primary)' }}
+                          />
+                          <span className="flex-1 truncate text-sidebar-foreground/80 font-medium">
+                            {folder.name}
                           </span>
-                        )}
+                          {folder._count && (
+                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-sidebar-accent text-sidebar-foreground/50">
+                              {folder._count.notes}
+                            </span>
+                          )}
+                        </Link>
                       </SidebarMenuButton>
+                      </div>
                       <AnimatePresence>
                         {expandedFolders.has(folder.id) && folder.children && (
                           <motion.div
@@ -207,8 +235,12 @@ export function AppSidebar({ folders = [] }: AppSidebarProps) {
                             <SidebarMenuSub>
                               {folder.children.map((child) => (
                                 <SidebarMenuSubItem key={child.id}>
-                                  <SidebarMenuSubButton asChild className="py-2">
-                                    <Link href={`/notes?folder=${child.id}`} onClick={closeMobile}>
+                                  <SidebarMenuSubButton
+                                    asChild
+                                    isActive={activeFolderId === child.id}
+                                    className="py-2"
+                                  >
+                                    <Link href={`/notes?folderId=${child.id}`} onClick={closeMobile}>
                                       <FolderClosed
                                         className="h-3 w-3"
                                         style={{ color: child.color || 'var(--sidebar-primary)' }}
@@ -265,6 +297,11 @@ export function AppSidebar({ folders = [] }: AppSidebarProps) {
           </Button>
         </div>
       </SidebarFooter>
+
+      <CreateFolderDialog
+        open={createFolderOpen}
+        onOpenChange={setCreateFolderOpen}
+      />
     </Sidebar>
   );
 }

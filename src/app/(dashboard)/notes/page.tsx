@@ -1,7 +1,15 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { Plus, Star, Archive, FileText, Search, Sparkles } from "lucide-react";
+import {
+  Plus,
+  Star,
+  Archive,
+  FileText,
+  Search,
+  Sparkles,
+  FolderClosed,
+} from "lucide-react";
 import Link from "next/link";
 import { motion } from "motion/react";
 
@@ -14,6 +22,7 @@ export default function NotesPage() {
   const filter = searchParams.get("filter") || undefined;
   const query = searchParams.get("q") || undefined;
   const useAi = searchParams.get("ai") === "true";
+  const folderId = searchParams.get("folderId") || undefined;
 
   const {
     notes,
@@ -23,10 +32,11 @@ export default function NotesPage() {
     toggleFavorite,
     archiveNote,
     deleteNote,
-  } = useNotes(filter, query, useAi);
+  } = useNotes({ filter, query, useAi, folderId });
 
   const getTitle = () => {
     if (query) return `Search Results`;
+    if (folderId) return notes[0]?.folder?.name || "Collection";
     if (filter === "favorites") return "Favorites";
     if (filter === "archive") return "Archive";
     return "All Notes";
@@ -34,6 +44,7 @@ export default function NotesPage() {
 
   const getIcon = () => {
     if (query) return Search;
+    if (folderId) return FolderClosed;
     if (filter === "favorites") return Star;
     if (filter === "archive") return Archive;
     return FileText;
