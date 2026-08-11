@@ -1,37 +1,71 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Note } from "@/types";
 
-export function useNotes(initialFilter?: string) {
+export function useNotes(
+  initialFilter?: string,
+  initialQuery?: string,
+  initialUseAi = false
+) {
   const [notes, setNotes] = useState<Note[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [aiResponse, setAiResponse] = useState<string | null>(null);
 
-  const fetchNotes = useCallback(async (filter?: string, query?: string) => {
-    setIsLoading(true);
-    setError(null);
+  // Guards against out-of-order responses when the filter/query changes fast.
+  const requestIdRef = useRef(0);
 
-    try {
-      const params = new URLSearchParams();
-      if (filter) params.set("filter", filter);
-      if (query) params.set("q", query);
+  const fetchNotes = useCallback(
+    async (filter?: string, query?: string, useAi = false) => {
+      const requestId = ++requestIdRef.current;
+      const isCurrent = () => requestId === requestIdRef.current;
 
-      const response = await fetch(`/api/notes?${params}`);
-      if (!response.ok) throw new Error("Failed to fetch notes");
+      setIsLoading(true);
+      setError(null);
+      setAiResponse(null);
 
-      const data = await response.json();
-      setNotes(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+      try {
+        // Semantic search goes through the AI endpoint; everything else is a
+        // plain filtered/text query against /api/notes.
+        if (query && useAi) {
+          const response = await fetch("/api/ai/search", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ query, useAi: true }),
+          });
+          if (!response.ok) throw new Error("Failed to search notes");
+
+          const data = await response.json();
+          if (!isCurrent()) return;
+          setNotes(data.notes ?? []);
+          setAiResponse(data.aiResponse || null);
+          return;
+        }
+
+        const params = new URLSearchParams();
+        if (filter) params.set("filter", filter);
+        if (query) params.set("q", query);
+
+        const response = await fetch(`/api/notes?${params}`);
+        if (!response.ok) throw new Error("Failed to fetch notes");
+
+        const data = await response.json();
+        if (!isCurrent()) return;
+        setNotes(data);
+      } catch (err) {
+        if (!isCurrent()) return;
+        setError(err instanceof Error ? err.message : "An error occurred");
+      } finally {
+        if (isCurrent()) setIsLoading(false);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
-    fetchNotes(initialFilter);
-  }, [initialFilter, fetchNotes]);
+    fetchNotes(initialFilter, initialQuery, initialUseAi);
+  }, [initialFilter, initialQuery, initialUseAi, fetchNotes]);
 
   const createNote = async (data: Partial<Note>) => {
     const response = await fetch("/api/notes", {
@@ -76,15 +110,21 @@ export function useNotes(initialFilter?: string) {
 
   const archiveNote = async (id: string) => {
     const note = notes.find((n) => n.id === id);
-    if (note) {
-      await updateNote(id, { isArchived: !note.isArchived });
-    }
+    if (!note) return;
+
+    const isArchived = !note.isArchived;
+    await updateNote(id, { isArchived });
+
+    // The archive view lists archived notes and every other view lists
+    // unarchived ones, so a toggled note no longer belongs in the current list.
+    setNotes((prev) => prev.filter((n) => n.id !== id));
   };
 
   return {
     notes,
     isLoading,
     error,
+    aiResponse,
     fetchNotes,
     createNote,
     updateNote,

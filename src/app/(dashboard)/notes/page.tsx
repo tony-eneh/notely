@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { Plus, Star, Archive, FileText } from "lucide-react";
+import { Plus, Star, Archive, FileText, Search, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { motion } from "motion/react";
 
@@ -13,20 +13,17 @@ export default function NotesPage() {
   const searchParams = useSearchParams();
   const filter = searchParams.get("filter") || undefined;
   const query = searchParams.get("q") || undefined;
+  const useAi = searchParams.get("ai") === "true";
 
   const {
     notes,
     isLoading,
+    error,
+    aiResponse,
     toggleFavorite,
     archiveNote,
     deleteNote,
-    fetchNotes,
-  } = useNotes(filter);
-
-  // Refetch when search params change
-  const handleSearch = () => {
-    fetchNotes(filter, query);
-  };
+  } = useNotes(filter, query, useAi);
 
   const getTitle = () => {
     if (query) return `Search Results`;
@@ -36,6 +33,7 @@ export default function NotesPage() {
   };
 
   const getIcon = () => {
+    if (query) return Search;
     if (filter === "favorites") return Star;
     if (filter === "archive") return Archive;
     return FileText;
@@ -63,7 +61,9 @@ export default function NotesPage() {
           </div>
           {query ? (
             <p className="text-muted-foreground ml-[52px]">
-              Showing results for &ldquo;{query}&rdquo;
+              {isLoading
+                ? `Searching for “${query}”…`
+                : `${notes.length} ${notes.length === 1 ? "result" : "results"} for “${query}”`}
             </p>
           ) : (
             <p className="text-muted-foreground ml-[52px]">
@@ -80,6 +80,20 @@ export default function NotesPage() {
           </Link>
         </Button>
       </motion.div>
+
+      {error && (
+        <div className="mb-6 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
+      {/* AI summary of semantic search results */}
+      {aiResponse && (
+        <div className="mb-6 flex gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+          <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+          <p className="text-sm text-foreground/80">{aiResponse}</p>
+        </div>
+      )}
 
       {/* Notes Grid */}
       <NoteList

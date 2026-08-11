@@ -7,8 +7,20 @@ const PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 const PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
 const SUBJECT = process.env.VAPID_SUBJECT || "mailto:admin@example.com";
 
-if (PUBLIC_KEY && PRIVATE_KEY) {
-  webpush.setVapidDetails(SUBJECT, PUBLIC_KEY, PRIVATE_KEY);
+// Configure lazily inside the request. Doing this at module scope makes an
+// invalid or placeholder VAPID key crash `next build` while it collects page
+// data, instead of failing just this one endpoint at runtime.
+function configureVapid(): string | null {
+  if (!PUBLIC_KEY || !PRIVATE_KEY) {
+    return "VAPID keys missing";
+  }
+  try {
+    webpush.setVapidDetails(SUBJECT, PUBLIC_KEY, PRIVATE_KEY);
+    return null;
+  } catch (error) {
+    console.error("[PUSH_TEST] Invalid VAPID configuration", error);
+    return "VAPID keys are invalid";
+  }
 }
 
 export async function POST(request: Request) {
@@ -18,8 +30,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (!PUBLIC_KEY || !PRIVATE_KEY) {
-      return NextResponse.json({ error: "VAPID keys missing" }, { status: 400 });
+    const vapidError = configureVapid();
+    if (vapidError) {
+      return NextResponse.json({ error: vapidError }, { status: 400 });
     }
 
     const body = await request.json().catch(() => ({}));

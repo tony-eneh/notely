@@ -6,8 +6,12 @@ export async function POST(request: Request) {
   try {
     const { userId } = await auth();
     if (!userId) {
-      // If unauthenticated, direct to sign-in with return to notes
-      return NextResponse.redirect(new URL("/sign-in?redirect_url=/notes", request.url));
+      // If unauthenticated, direct to sign-in with return to notes.
+      // 303 so the browser follows up with GET rather than replaying the POST.
+      return NextResponse.redirect(
+        new URL("/sign-in?redirect_url=/notes", request.url),
+        303
+      );
     }
 
     const formData = await request.formData();
@@ -72,10 +76,12 @@ export async function POST(request: Request) {
       },
     });
 
-    // Redirect to the newly created note
-    return NextResponse.redirect(new URL(`/notes/${note.id}`, request.url));
+    // Redirect to the newly created note. 303 (See Other) turns the share
+    // POST into a GET; the default 307 would replay the POST against the note
+    // page, which only handles GET.
+    return NextResponse.redirect(new URL(`/notes/${note.id}`, request.url), 303);
   } catch (error) {
     console.error("[SHARE_TARGET_POST]", error);
-    return NextResponse.redirect(new URL("/notes?share=failed", request.url));
+    return NextResponse.redirect(new URL("/notes?share=failed", request.url), 303);
   }
 }

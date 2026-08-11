@@ -355,13 +355,13 @@ export function NoteEditorClient({ note, isNew = false }: NoteEditorClientProps)
 
       {/* Notion-style editor container */}
       <div className="pt-12">
-        <div className="max-w-[900px] mx-auto px-24 py-16">
+        <div className="max-w-[900px] mx-auto px-5 py-8 sm:px-12 sm:py-12 lg:px-24 lg:py-16">
           {/* Title - Notion style */}
           <Input
             value={title}
             onChange={handleTitleChange}
             placeholder="Untitled"
-            className="text-[2.5em] font-bold border-none shadow-none px-0 mb-2 focus-visible:ring-0 placeholder:text-muted-foreground/30 bg-transparent h-auto py-1"
+            className="text-3xl sm:text-[2.5em] font-bold border-none shadow-none px-0 mb-2 focus-visible:ring-0 placeholder:text-muted-foreground/30 bg-transparent h-auto py-1"
           />
 
           {/* Summary (if exists) */}
