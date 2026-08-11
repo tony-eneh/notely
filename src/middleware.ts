@@ -6,6 +6,11 @@ const isPublicRoute = createRouteMatcher([
   "/sign-up(.*)",
   "/api/webhooks(.*)",
   "/manifest.json",
+  // The Web Share Target POST handles its own auth: auth.protect() answers
+  // non-document requests with a 404 and bounces navigations through a
+  // handshake that will not carry the shared form data, so a signed-out share
+  // would dead-end instead of reaching the route's redirect to sign-in.
+  "/share-target",
 ]);
 
 export default clerkMiddleware(async (auth, request) => {
