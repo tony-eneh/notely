@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Mic, Square, Play, Pause, Trash2, Check, Loader2 } from "lucide-react";
+import { Mic, Square, Play, Pause, Trash2, Check, Loader2, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 import { Button } from "@/components/ui/button";
@@ -262,8 +262,21 @@ export function VoiceNoteRecorder({
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="card-paper rounded-2xl border border-border/50 p-6 shadow-lg"
+      className="card-paper relative rounded-2xl border border-border/50 p-6 shadow-lg"
     >
+      {/* Without this the only exit from the recorder is to record something
+          and then discard it; the overlay has no other dismiss affordance. */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={onCancel}
+        disabled={state === "transcribing"}
+        aria-label="Close voice note recorder"
+        className="absolute right-3 top-3 h-8 w-8 text-muted-foreground hover:text-foreground"
+      >
+        <X className="h-4 w-4" />
+      </Button>
+
       <div className="flex flex-col items-center gap-6">
         {/* Status Header */}
         <div className="text-center">

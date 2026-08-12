@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { streamText } from "ai";
-import { defaultModel } from "@/lib/ai";
+import { generateText } from "ai";
+import { defaultModel, aiErrorResponse } from "@/lib/ai";
 import { extractPlainText } from "@/lib/content";
 
 export async function POST(request: Request) {
@@ -16,10 +16,21 @@ export async function POST(request: Request) {
     // Extract plain text for context
     const plainText = extractPlainText(content);
 
-    const result = streamText({
+    if (!plainText.trim()) {
+      return NextResponse.json(
+        { error: "Write something first so the AI has context to continue." },
+        { status: 400 }
+      );
+    }
+
+    // Deliberately not streamed. The continuation is a sentence or three and
+    // the editor inserts it in one go, while a streamed response reports
+    // upstream failures mid-body as a 200 with no text, which is
+    // indistinguishable from the model returning nothing.
+    const { text } = await generateText({
       model: defaultModel,
-      system: `You are a helpful writing assistant. Your job is to continue the user's text naturally and coherently. 
-      
+      system: `You are a helpful writing assistant. Your job is to continue the user's text naturally and coherently.
+
 Rules:
 - Continue the writing in the same style and tone
 - Keep the continuation concise (1-3 sentences)
@@ -29,12 +40,9 @@ Rules:
       prompt: `Continue this text naturally:\n\n${plainText}`,
     });
 
-    return result.toTextStreamResponse();
+    return NextResponse.json({ completion: text });
   } catch (error) {
-    console.error("[AI_COMPLETE]", error);
-    return NextResponse.json(
-      { error: "Failed to generate completion" },
-      { status: 500 }
-    );
+    const { status, body } = aiErrorResponse("AI_COMPLETE", error);
+    return NextResponse.json(body, { status });
   }
 }

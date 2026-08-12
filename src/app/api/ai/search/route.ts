@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { embed, embedMany, cosineSimilarity } from "ai";
-import { embeddingModel, defaultModel } from "@/lib/ai";
+import { embeddingModel, defaultModel, aiErrorResponse } from "@/lib/ai";
 import { generateText } from "ai";
 import { db } from "@/lib/db";
 import { Note, Folder, Tag } from "@/types";
@@ -43,11 +43,8 @@ export async function POST(request: Request) {
       return await textSearch(userId, query);
     }
   } catch (error) {
-    console.error("[AI_SEARCH]", error);
-    return NextResponse.json(
-      { error: "Failed to perform search" },
-      { status: 500 }
-    );
+    const { status, body } = aiErrorResponse("AI_SEARCH", error);
+    return NextResponse.json(body, { status });
   }
 }
 

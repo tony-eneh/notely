@@ -38,9 +38,11 @@ export function useNotes(options: NotesQuery = {}) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ query: params.query, useAi: true }),
         });
-        if (!response.ok) throw new Error("Failed to search notes");
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to search notes");
+        }
 
-        const data = await response.json();
         if (!isCurrent()) return;
         setNotes(data.notes ?? []);
         setAiResponse(data.aiResponse || null);

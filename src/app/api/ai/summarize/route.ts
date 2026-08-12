@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { generateText } from "ai";
-import { defaultModel } from "@/lib/ai";
+import { defaultModel, aiErrorResponse } from "@/lib/ai";
 import { db } from "@/lib/db";
 import { extractPlainText } from "@/lib/content";
 
@@ -52,10 +52,7 @@ Rules:
 
     return NextResponse.json({ summary });
   } catch (error) {
-    console.error("[AI_SUMMARIZE]", error);
-    return NextResponse.json(
-      { error: "Failed to generate summary" },
-      { status: 500 }
-    );
+    const { status, body } = aiErrorResponse("AI_SUMMARIZE", error);
+    return NextResponse.json(body, { status });
   }
 }
