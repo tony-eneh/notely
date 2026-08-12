@@ -110,6 +110,18 @@ export default function NotesPage() {
       <NoteList
         notes={notes}
         isLoading={isLoading}
+        emptyVariant={
+          query
+            ? "search"
+            : folderId
+              ? "folder"
+              : filter === "favorites"
+                ? "favorites"
+                : filter === "archive"
+                  ? "archive"
+                  : "notes"
+        }
+        emptyQuery={query}
         onFavorite={toggleFavorite}
         onArchive={archiveNote}
         onDelete={deleteNote}

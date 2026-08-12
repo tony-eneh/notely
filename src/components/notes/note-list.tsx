@@ -13,25 +13,62 @@ import { Skeleton } from "@/components/ui/skeleton";
 interface NoteListProps {
   notes: Note[];
   isLoading?: boolean;
+  /** What the empty state should say when there is nothing to show. */
+  emptyVariant?: "notes" | "search" | "favorites" | "archive" | "folder";
+  emptyQuery?: string;
   onFavorite?: (id: string, isFavorite: boolean) => void;
   onArchive?: (id: string) => void;
   onDelete?: (id: string) => void;
 }
 
+const EMPTY_STATES: Record<
+  NonNullable<NoteListProps["emptyVariant"]>,
+  { title: string; body: string; cta: boolean }
+> = {
+  notes: {
+    title: "Begin Your Story",
+    body: "Every great idea starts with a single note. Create your first one and let your thoughts flow.",
+    cta: true,
+  },
+  search: {
+    title: "No matches",
+    body: "Nothing in your notes matches that search. Try a different word, or switch on AI Search for a meaning-based look.",
+    cta: false,
+  },
+  favorites: {
+    title: "No favorites yet",
+    body: "Star a note from its menu and it will show up here for quick access.",
+    cta: false,
+  },
+  archive: {
+    title: "Archive is empty",
+    body: "Notes you archive are kept here, out of the way but never deleted.",
+    cta: false,
+  },
+  folder: {
+    title: "This collection is empty",
+    body: "Notes filed into this collection will appear here.",
+    cta: true,
+  },
+};
+
 export function NoteList({
   notes,
   isLoading,
+  emptyVariant = "notes",
+  emptyQuery,
   onFavorite,
   onArchive,
   onDelete,
 }: NoteListProps) {
-  const [isOnline, setIsOnline] = useState(
-    typeof navigator === "undefined" ? true : navigator.onLine
-  );
-  const [queuedSync, setQueuedSync] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem("notely-sync-queued") === "1";
-  });
+  // Server-rendered defaults; corrected on mount so hydration matches.
+  const [isOnline, setIsOnline] = useState(true);
+  const [queuedSync, setQueuedSync] = useState(false);
+
+  useEffect(() => {
+    setIsOnline(navigator.onLine);
+    setQueuedSync(localStorage.getItem("notely-sync-queued") === "1");
+  }, []);
 
   useEffect(() => {
     const handleOnline = () => {
@@ -85,8 +122,10 @@ export function NoteList({
   }
 
   if (notes.length === 0) {
+    const emptyState = EMPTY_STATES[emptyVariant];
+
     return (
-      <motion.div 
+      <motion.div
         className="flex flex-col items-center justify-center py-20 text-center"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -96,17 +135,21 @@ export function NoteList({
           <Feather className="h-10 w-10 text-primary" />
         </div>
         <h3 className="font-display text-2xl font-semibold mb-2 text-foreground">
-          Begin Your Story
+          {emptyState.title}
         </h3>
         <p className="text-muted-foreground mb-6 max-w-sm leading-relaxed">
-          Every great idea starts with a single note. Create your first one and let your thoughts flow.
+          {emptyVariant === "search" && emptyQuery
+            ? `Nothing in your notes matches “${emptyQuery}”. Try a different word, or switch on AI Search for a meaning-based look.`
+            : emptyState.body}
         </p>
-        <Button asChild className="btn-shine gap-2 px-6">
-          <Link href="/notes/new">
-            <Plus className="h-4 w-4" />
-            Create Your First Note
-          </Link>
-        </Button>
+        {emptyState.cta && (
+          <Button asChild className="btn-shine gap-2 px-6">
+            <Link href="/notes/new">
+              <Plus className="h-4 w-4" />
+              {emptyVariant === "folder" ? "New Note" : "Create Your First Note"}
+            </Link>
+          </Button>
+        )}
       </motion.div>
     );
   }
